@@ -1,0 +1,243 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-user-select: none;
+}
+
+body {
+    background-image: linear-gradient(to right, #434343 0%, black 100%);
+}
+
+.main {
+    overflow: scroll;
+    height: calc(100vh - 50px);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0;
+}
+
+.inputfields {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+}
+
+.form form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+}
+
+.form input {
+    max-width: 100%;
+    width: 50vw;
+    outline: none;
+    border: none;
+    background: none;
+    padding: 15px;
+    font-size: 22px;
+    color: #e6e6e6;
+    background-color: #88888844;
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+}
+
+.form input:hover {
+    position: relative;
+    z-index: 1;
+    transform: scale(1.05);
+}
+
+.threadSelector {
+    width: auto;
+    position: relative;
+    display: inline-block;
+}
+
+.dropbtn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.threadSelector .content {
+    width: 100%;
+    pointer-events: none;
+    border-radius: 15px;
+    opacity: 0;
+    position: absolute;
+    background-color: transparent;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.threadSelector .content .buttongrp {
+    height: 100%;
+    max-height: 40vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-radius: 15px;
+    margin-top: 10px;
+}
+
+.threadSelector .content button {
+    border: none;
+    outline: none;
+    width: 100%;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transform: translateX(50%);
+    opacity: 0;
+    transition: all 0.4s ease-in;
+    background-color: #88888833;
+    color: #4CAF50;
+    z-index: 2;
+    cursor: pointer;
+}
+
+.threadSelector .content button:hover {
+    background-color: #8888ff44;
+}
+
+.threadSelector:hover .content {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.threadSelector:hover .content button {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.threadSelector:hover .dropbtn {
+    background-color: #3e8e41;
+    transform: scale(1.1);
+}
+
+.download {
+    border-radius: 15px;
+    padding: 15px;
+    margin: 5px;
+    color: #e6e6e6;
+    border: none;
+    outline: none;
+    background-color: #4CAF50;
+    transition: all 0.3s ease;
+}
+
+.download:hover:enabled {
+    background-color: #3e8e41;
+    transform: scale(1.1);
+}
+
+.advancedoptions {
+    transition: all 0.6s ease;
+    overflow: scroll;
+    max-height: 0;
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.advancedoptions .heading {
+    color: #e6e6e6;
+    padding: 20px;
+    font-size: 26px;
+}
+
+.advancedoptions .radio {
+    color: #e6e6e6;
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.advancedoptions .radio input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #eee;
+    border-radius: 50%;
+}
+
+.advancedoptions .radio :hover input~.checkmark {
+    background-color: #ccc;
+}
+
+.advancedoptions .radio input:checked~.checkmark {
+    /* background-color: #2196F3; */
+    background-color: #4CAF50;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.advancedoptions .radio input:checked~.checkmark:after {
+    display: block;
+}
+
+.checkmark:after {
+    top: 7px;
+    left: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: white;
+}
+
+.savingLocation {
+    color: #999999;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 20px;
+}
+
+@media (prefers-color-scheme: light) {
+    body {
+        background-image: linear-gradient(to right, #BCBCBC 0%, white 100%);
+    }
+    .advancedoptions .heading {
+        color: #191919;
+    }
+    .advancedoptions .radio {
+        color: #191919;
+    }
+    .savingLocation {
+        color: #444444;
+    }
+}
+
+ ::-webkit-scrollbar {
+    width: 0px;
+}

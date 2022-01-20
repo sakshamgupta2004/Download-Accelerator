@@ -1,53 +1,159 @@
+const { webContents } = require('electron');
 const electron = require('electron');
 const fs = require('fs');
-const { OutgoingMessage } = require('http');
+const path = require('path');
 const request = require('request');
-const { app, BrowserWindow, Menu, ipcMain } = electron;
+const { app, BrowserWindow, Menu, ipcMain, shell, dialog, session, MenuItem } = electron;
 var mainwindow;
+var allowedToExit = true;
+var saveLocation = null;
+var savedUrl = null;
+var savedFileName = null;
+var cookiesMain = null;
+const iconPath = process.platform !== 'darwin' ?
+    'src/titlebar/icon.ico' :
+    'src/titlebar/icon.icns';
 app.on('ready', () => {
     mainwindow = new BrowserWindow({
         //title: 'Sugarsnooper',
         //width: 500,
         //height: 800,
+        minHeight: 300,
+        minWidth: 500,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
         },
-        alwaysOnTop: true
-        //frame: process.platform == "win32" ? false : true
+        //alwaysOnTop: true
+        frame: process.platform != "win32",
+        icon: path.join(__dirname, iconPath)
     });
-    //mainwindow.loadURL('http://www.sugarsnooper.com/Default.aspx');
-    mainwindow.loadFile('home.html');
+
+    mainwindow.on('close', (e) => {
+        if (!allowedToExit)
+            e.preventDefault();
+    });
+    mainwindow.on('resize', (e) => {
+        console.log(mainwindow.getSize()[1]);
+    });
+    mainwindow.webContents.session.on('will-download', (event, item, webContents) => {
+        event.preventDefault();
+        savedUrl = item.getURL();
+        savedFileName = item.getFilename();
+        var domain = new URL(item.getURL()).hostname;
+        console.log(domain);
+        mainwindow.loadFile('src/download.html');
+        cookiesMain = "";
+        session.defaultSession.cookies.get({})
+            .then((cookies) => {
+                cookies.forEach((item) => {
+                    if (domain.includes(item['domain']) || (!item['hostOnly']))
+                        cookiesMain += item['name'] + '=' + item['value'] + ";";
+                });
+                cookiesMain = cookiesMain.substring(0, cookiesMain.length - 1);
+                console.log(cookiesMain);
+            }).catch((error) => {
+                console.log(error)
+            });
+
+    });
+
+    var menu = new Menu();
+    menu.append(new MenuItem({
+        label: 'Download File',
+        click: () => {
+
+            savedUrl = mainwindow.webContents.getURL();
+            savedFileName = decodeURIComponent(savedUrl.split('/').pop().split('#')[0].split('?')[0]);
+            var domain = new URL(savedUrl).hostname;
+            console.log(domain);
+            mainwindow.loadFile('src/download.html');
+            cookiesMain = "";
+            session.defaultSession.cookies.get({})
+                .then((cookies) => {
+                    cookies.forEach((item) => {
+                        if (domain.includes(item['domain']) || (!item['hostOnly']))
+                            cookiesMain += item['name'] + '=' + item['value'] + ";";
+                    });
+                    cookiesMain = cookiesMain.substring(0, cookiesMain.length - 1);
+                    console.log(cookiesMain);
+                }).catch((error) => {
+                    console.log(error)
+                });
+        }
+    }));
+
+    mainwindow.webContents.on("context-menu", (event, click) => {
+        event.preventDefault();
+        if (!mainwindow.webContents.getURL().startsWith("file:///"))
+            menu.popup(mainwindow.webContents);
+    }, false);
+
+    mainwindow.loadFile('src/home.html');
     //mainwindow.resizable = false;
-    //Menu.setApplicationMenu(null);
+    Menu.setApplicationMenu(null);
 });
 
 
-
-
-
 var cancelDownload = false;
-const getDownloadSizeAndCheckIfSupportsRange = function (url, successfullCallback, failedCallback) {
+const getDownloadLocation = function() {
+    if (saveLocation == null)
+        return app.getPath("downloads");
+    else
+        return saveLocation;
+}
+const getFileNameWithoutExtAndExt = function(filename = "") {
+    let name = filename;
+    let path = '';
+    let ext = '';
+    if (filename.includes('/')) {
+        name = filename.substring(filename.lastIndexOf('/') + 1);
+        path = filename.substring(0, filename.lastIndexOf('/') + 1);
+    }
+
+    if (name.includes('.')) {
+        ext = name.substring(name.lastIndexOf('.') + 1);
+        name = name.substring(0, name.lastIndexOf('.'));
+    }
+    return [path + name, ext];
+};
+
+const generateUniqueName = function(filename, tries = 0) {
+
+    if (!fs.existsSync(filename)) {
+        return filename;
+    }
+    nameAndExt = getFileNameWithoutExtAndExt(filename);
+    let name = nameAndExt[0];
+    if (tries != 0) {
+        name = name.substring(0, name.lastIndexOf("("));
+    }
+    return generateUniqueName(name + "(" + (tries + 1) + ")." + nameAndExt[1], tries + 1);
+};
+const getDownloadSizeAndCheckIfSupportsRange = function(url, successfullCallback, failedCallback) {
     var req = request({
         method: 'GET',
-        uri: url
+        uri: url,
+        headers: {
+            'Cookie': cookiesMain
+        }
     });
-    req.on('response', function (data) {
+    req.on('response', function(data) {
         req.abort();
         if (data.statusCode == 200) {
+            //console.log(data.headers['content-disposition']);
             successfullCallback(data.headers['content-length'], data.headers['accept-ranges'] == 'bytes');
-        }
-        else {
+        } else {
             failedCallback(data.statusCode);
         }
     });
-    req.on('error', function (e) {
+    req.on('error', function(e) {
         if (e.message != 'aborted')
             failedCallback(e.message);
     });
 
 };
-const download = function (theUrl, filename, successfullCallback, failedCallback, progressCallback, rangeStart = 0, rangeEnd = 0, cancelFlag = [false]) {
+const download = function(theUrl, filename, successfullCallback, failedCallback, progressCallback, rangeStart = 0, rangeEnd = 0, cancelFlag = [false]) {
     let file_url = theUrl;
     let out = fs.createWriteStream(filename + '_tempDownloaderDownload');
     let total = 0;
@@ -57,29 +163,34 @@ const download = function (theUrl, filename, successfullCallback, failedCallback
     if (rangeStart == 0 && rangeEnd == 0) {
         req = request({
             method: 'GET',
-            uri: file_url
+            uri: file_url,
+            headers: {
+                'Cookie': cookiesMain
+            }
         });
-    }
-    else {
+    } else {
         req = request({
             method: 'GET',
             uri: file_url,
             headers: {
-                'Range': 'bytes=' + rangeStart + '-' + rangeEnd
+                'Range': 'bytes=' + rangeStart + '-' + rangeEnd,
+                'Cookie': cookiesMain
             }
         });
     }
 
     req.pipe(out);
 
-    req.on('response', function (data) {
+    req.on('response', function(data) {
         total = data.headers['content-length'];
+        if (typeof total === 'undefined')
+            total = 0;
         if (!(data.statusCode == 200 || data.statusCode == 206)) {
             req.abort();
         }
     });
 
-    req.on('data', function (chunk) {
+    req.on('data', function(chunk) {
         downloaded += chunk.length;
         progressCallback(chunk.length, total);
         if (cancelFlag[0] || cancelDownload) {
@@ -87,28 +198,27 @@ const download = function (theUrl, filename, successfullCallback, failedCallback
         }
     });
 
-    req.on('end', function () {
+    req.on('end', function() {
         try {
             out.close();
-        }
-        catch (e) { }
+        } catch (e) {}
 
-        if (downloaded == total) {
+        if (downloaded == total || total == 0) {
             if (fs.existsSync(filename)) {
                 fs.rmSync(filename);
             }
             fs.renameSync(filename + "_tempDownloaderDownload", filename);
             successfullCallback();
-        }
-        else {
+        } else {
             if (fs.existsSync(filename + "_tempDownloaderDownload")) {
                 fs.rmSync(filename + "_tempDownloaderDownload");
             }
+            console.log(typeof total);
             failedCallback("Unequal Output");
         }
     });
 
-    req.on('error', function (e) {
+    req.on('error', function(e) {
         if (fs.existsSync(filename + "_tempDownloaderDownload")) {
             fs.rmSync(filename + "_tempDownloaderDownload");
         }
@@ -123,12 +233,15 @@ const singleThreadDownload = (event, url, filename) => {
         filename,
         () => {
             event.reply('completed', null);
+            allowedToExit = true;
         },
         (status) => {
+            console.log(status);
             if (fs.existsSync(filename)) {
                 fs.rmSync(filename);
             }
             event.reply('failed', status);
+            allowedToExit = true;
         },
         (received, total) => {
             totalDownloaded += received;
@@ -148,8 +261,7 @@ const multiThreadDownload = (event, url, filename, length, threads) => {
             k += 1;
             if (k == threads) {
                 doneCallback();
-            }
-            else {
+            } else {
                 copyParts(out, k, doneCallback);
             }
         });
@@ -189,10 +301,10 @@ const multiThreadDownload = (event, url, filename, length, threads) => {
                         copyParts(out, 0, () => {
                             out.close();
                             event.reply('completed', null);
+                            allowedToExit = true;
                         });
                     }
-                }
-                else {
+                } else {
                     fs.rmSync(filename + "_PART_" + j);
                 }
             },
@@ -201,8 +313,17 @@ const multiThreadDownload = (event, url, filename, length, threads) => {
                 for (let k = 0; k < threads; k++) {
                     if (k != j)
                         cancelFlags[k] = true;
+
+                    if (fs.existsSync(filename + "_PART_" + k)) {
+                        try {
+                            fs.rmSync(filename + "_PART_" + k);
+                        } catch (e) {
+
+                        }
+                    }
                 }
                 event.reply('failed', error);
+                allowedToExit = true;
             },
             (downloaded, total) => {
                 totalDownloaded += downloaded;
@@ -211,44 +332,100 @@ const multiThreadDownload = (event, url, filename, length, threads) => {
                 event.reply('progress', totalDownloaded, length);
             },
             partRanges[i][0],
-            partRanges[i][1],
-            [cancelFlags[j]]
+            partRanges[i][1], [cancelFlags[j]]
         );
     }
 
 
 };
-
+let fn = '';
 ipcMain.on('download-start', (event, url, filename, threads) => {
 
+    allowedToExit = false;
+    filename = path.join(getDownloadLocation(), filename);
+    filename = generateUniqueName(filename);
+    fn = filename;
     cancelDownload = false;
     if (threads > 1) {
         getDownloadSizeAndCheckIfSupportsRange(
             url,
             (length, acceptsRanges) => {
-                if (length == 0) {
+                if (length == 0 || typeof length === 'undefined') {
                     singleThreadDownload(event, url, filename);
-                }
-                else {
+                    event.reply('rangenotsupport', null);
+                } else {
                     if (!acceptsRanges) {
                         singleThreadDownload(event, url, filename);
-                    }
-                    else {
-                        multiThreadDownload(event, url, filename, length, threads);
+                        event.reply('rangenotsupport', null);
+                    } else {
+                        if (length <= threads) {
+                            threads = Math.trunc(length / 2);
+                        }
+                        if (threads < 1) {
+                            threads = 1;
+                        }
+                        if (threads == 1) {
+                            singleThreadDownload(event, url, filename);
+                            event.reply('rangenotsupport', null);
+                        } else {
+                            multiThreadDownload(event, url, filename, length, threads);
+                        }
                     }
                 }
             },
             (error) => {
+                console.log(error);
                 event.reply('failed', error);
+                allowedToExit = true;
             }
         );
-    }
-    else {
+    } else {
         singleThreadDownload(event, url, filename);
     }
 });
 
 ipcMain.on('cancel-download', (event, args) => {
-cancelDownload = true;
-event.reply('failed', "Cancelled");
+    cancelDownload = true;
+    event.reply('failed', "Cancelled");
+});
+ipcMain.on('openContainingFolder', (event, args) => {
+    shell.openPath(getDownloadLocation());
+});
+ipcMain.on('showInExplorer', (event, args) => {
+    shell.showItemInFolder(fn);
+});
+ipcMain.on('openLocationSelector', (event, args) => {
+    try {
+        saveLocation = dialog.showOpenDialogSync(mainwindow, { properties: ['openDirectory'] })[0];
+    } catch {
+
+    }
+    event.returnValue = saveLocation;
+});
+ipcMain.on('getSaveLocation', (event, args) => {
+    event.returnValue = getDownloadLocation();
+});
+ipcMain.on('resetSaveLocation', (event, args) => {
+    saveLocation = null;
+    event.returnValue = 'done';
+});
+ipcMain.on('getSavedUrlAndFileName', (event, args) => {
+    event.returnValue = [savedUrl, savedFileName];
+});
+ipcMain.on('quit', (event) => {
+    if (allowedToExit)
+        app.quit();
+    else
+        dialog.showMessageBox(mainwindow, { title: 'Downloader', message: 'Please wait for the download to finish' });
+    //mainwindow.minimize();
+});
+ipcMain.on('minimize', (event, args) => {
+    mainwindow.minimize();
+});
+ipcMain.on('maximize', (event, args) => {
+    if (mainwindow.isMaximized()) {
+        mainwindow.unmaximize();
+    } else {
+        mainwindow.maximize();
+    }
 });

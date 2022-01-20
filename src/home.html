@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/font.css" />
+</head>
+<script>
+    var numThreads = 8;
+    var maxThreads = 50;
+</script>
+
+<body>
+    <div class="main">
+        <div class="form">
+            <form>
+                <div class="inputfields">
+                    <input id="urlIn" type="url" placeholder="http://domain.com/file" />
+
+
+                    <div class="threadSelector">
+                        <button class="dropbtn" type="button">Threads: 8</button>
+                        <div class="content">
+                            <div class="buttongrp">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="threadSelector">
+                    <button id="download_button" class="download" type="submit">Download Now</button>
+                    <button id="advancedoptions" class="download" type="button">&darr;</button>
+                </div>
+            </form>
+            <div class='advancedoptions'>
+                <label class="heading">Advanced Options</label>
+                <label class="radio">Save to default location
+                    <input type="radio" checked="true" name="saveto" id="savetodefault"></input>
+                    <span class="checkmark"></span>
+                </label>
+                <div class="inputfields" style="align-items:center; justify-content: flex-start;">
+                    <label class="radio">Select location to save to:
+                        <input type="radio" name="saveto" id="savetoselection"></input>
+                        <span class="checkmark"></span>
+                    </label>
+                    <button class="download" id="locationselectbutton">Select Location</button>
+                </div>
+                <label class="savingLocation" id="saveLocationLabel"></label>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="titlebar/titlebar.js"></script>
+<script>
+    let urlIn = document.getElementById("urlIn");
+    let button = document.getElementById("download_button");
+    let selector = document.getElementById("threadselector");
+    let advancedoptionsbutton = document.getElementById('advancedoptions');
+    let advancedoptions = document.querySelector(".advancedoptions");
+    let dropbuttonthreads = document.querySelector(".dropbtn");
+    let dropbuttonsholder = document.querySelector('.buttongrp');
+    let dropButtons = [];
+    advancedoptionsbutton.addEventListener('click', (e) => {
+        if (advancedoptionsbutton.innerText == '↓') {
+            advancedoptions.style.maxHeight = "50vh";
+            advancedoptionsbutton.innerText = '↑';
+            updateSaveLocation();
+        } else if (advancedoptionsbutton.innerText == '↑') {
+            advancedoptions.style.maxHeight = "0";
+            advancedoptionsbutton.innerText = '↓';
+        }
+
+    });
+
+    for (let i = 0; i < maxThreads; i++) {
+        let j = i;
+        dropButtons[i] = document.createElement('button');
+        dropButtons[i].innerText = i + 1;
+        dropButtons[i].type = 'button';
+        dropButtons[i].addEventListener('click', (e) => {
+            numThreads = j + 1;
+            dropbuttonthreads.innerText = "Threads: " + numThreads;
+        });
+        dropbuttonsholder.appendChild(dropButtons[i]);
+    }
+    dropbuttonthreads.innerText = "Threads: " + numThreads;
+
+
+    document.querySelector('.form form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        localStorage.setItem('url', urlIn.value);
+        localStorage.setItem('threads', numThreads);
+        window.location.href = urlIn.value;
+    });
+
+
+
+
+
+    const {
+        ipcRenderer,
+        clipboard
+    } = require('electron');
+    const updateSaveLocation = () => {
+        document.getElementById('saveLocationLabel').innerText = 'Saving to: ' + ipcRenderer.sendSync('getSaveLocation', null);
+    };
+    let locationselectorbutton = document.getElementById('locationselectbutton');
+    locationselectorbutton.disabled = true;
+    document.getElementsByName('saveto')[0].addEventListener('change', (e) => {
+        console.log('save to default');
+        locationselectorbutton.disabled = true;
+        ipcRenderer.sendSync('resetSaveLocation', null);
+        updateSaveLocation();
+    });
+    document.getElementsByName('saveto')[1].addEventListener('change', (e) => {
+        console.log('save to location');
+        locationselectorbutton.disabled = false;
+    });
+    locationselectorbutton.addEventListener('click', (e) => {
+        ipcRenderer.sendSync('openLocationSelector', null);
+        updateSaveLocation();
+    });
+
+
+
+    if (clipboard.readText().startsWith('http://') || clipboard.readText().startsWith('https://'))
+        urlIn.value = clipboard.readText();
+</script>
+
+</html>

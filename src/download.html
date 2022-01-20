@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<header>
+    <title>Downloading</title>
+</header>
+
+<head></head>
+
+<body>
+
+    <input id="download_button" value="Cancel" type="button"></input>
+    <p id="progress">
+
+    </p>
+
+    <progress value="0" max="100" id="downloadProgress"></progress>
+    <br />
+    <br />
+    <div id="partprogresses">
+
+    </div>
+</body>
+
+<script src="titlebar/titlebar.js"></script>
+<script>
+    //var urlToDownload = localStorage.getItem('url');
+    var numThreads = localStorage.getItem('threads');
+    let button = document.getElementById("download_button");
+
+
+
+
+    button.addEventListener("click", () => {
+
+
+        if (button.value == 'Retry') {
+            window.location.reload();
+            button.value = 'Cancel';
+        } else if (button.value == 'Cancel') {
+            ipcRenderer.send('cancel-download', null);
+            button.value = 'Retry';
+        } else if (button.value == 'Show in Explorer') {
+            ipcRenderer.send('showInExplorer', null);
+        }
+    });
+
+    let progressText = document.getElementById("progress");
+    let progressBar = document.getElementById("downloadProgress");
+    let partprogressesHolder = document.getElementById("partprogresses");
+    let partprogresses = [];
+    let partprogressestext = [];
+    for (let i = 0; i < numThreads; i++) {
+        partprogresses[i] = document.createElement('progress');
+        partprogressestext[i] = document.createElement('p');
+        partprogresses[i].value = 0;
+        partprogresses[i].max = 100;
+        partprogressesHolder.appendChild(partprogresses[i]);
+        partprogressesHolder.appendChild(partprogressestext[i]);
+        //partprogressesHolder.appendChild(document.createElement('br'));
+    }
+    const {
+        ipcRenderer
+    } = require('electron');
+    var urlToDownload = ipcRenderer.sendSync('getSavedUrlAndFileName')[0];
+    var filename = ipcRenderer.sendSync('getSavedUrlAndFileName')[1];
+    const filesize = function humanFileSize(bytes, si = false, dp = 1) {
+        const thresh = si ? 1000 : 1024;
+
+        if (Math.abs(bytes) < thresh) {
+            return bytes + ' B';
+        }
+
+        const units = si ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+        let u = -1;
+        const r = 10 ** dp;
+
+        do {
+            bytes /= thresh;
+            ++u;
+        } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+
+
+        return bytes.toFixed(dp) + ' ' + units[u];
+    };
+    let cancelled = false;
+    ipcRenderer.on('merging', (e, args) => {
+        progressText.innerHTML = "Merging";
+    });
+    ipcRenderer.on('part-progress', (e, completed, total, partnum) => {
+        if (total != 0) {
+            partprogresses[partnum].value = Math.trunc((completed * 100) / total);
+            partprogressestext[partnum].innerHTML = filesize(completed) + " of " + filesize(total);
+        } else {}
+    });
+    ipcRenderer.on('progress', (e, completed, total) => {
+        if (!cancelled) {
+            if (total != 0) {
+                progressText.innerHTML = filesize(completed) + " of " + filesize(total);
+                progressBar.value = Math.trunc((completed * 100) / total);
+                progressBar.style.color = '#8888FF';
+            } else {}
+        }
+    });
+    ipcRenderer.on('completed', (e, args) => {
+        button.value = 'Show in Explorer';
+        progressText.innerHTML = "Completed";
+        progressBar.style.color = '#88FF88';
+        progressBar.value = 100;
+        partprogresses.forEach(element => {
+            element.value = 100;
+        });
+    });
+    ipcRenderer.on('failed', (event, e) => {
+        button.value = 'Retry';
+        if (e != 'Cancelled' && !cancelled) {
+            progressText.innerHTML = "Failed: " + e;
+        } else {
+            progressText.innerHTML = "Cancelled";
+            cancelled = true;
+        }
+        progressBar.style.color = '#FF8888';
+        progressBar.value = 100;
+    });
+    ipcRenderer.on('rangenotsupport', (e, args) => {
+        for (let l = 1; l < partprogresses.length; l++)
+            partprogressesHolder.removeChild(partprogresses[l]);
+
+
+        progressBar.value = -1;
+        partprogresses[0].value = -1;
+    });
+    //ipcRenderer.send('download-start', urlToDownload, urlToDownload.split('/').pop().split('#')[0].split('?')[0], numThreads);
+    ipcRenderer.send('download-start', urlToDownload, filename, numThreads);
+</script>
+
+</html>

@@ -1,16 +1,17 @@
 {
-  "name": "Download Accelerator",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "electron ."
-  },
-  "author": "Sugarsnooper",
-  "license": "ISC",
-  "dependencies": {
-    "electron": "^16.0.7",
-    "electron-packager": "^15.4.0",
-    "request": "^2.88.2"
-  }
+    "name": "Download Accelerator",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "icon": "src/titlebar/icon.ico",
+    "scripts": {
+        "start": "electron ."
+    },
+    "author": "Sugarsnooper",
+    "license": "ISC",
+    "dependencies": {
+        "electron": "^16.0.7",
+        "electron-packager": "^15.4.0",
+        "request": "^2.88.2"
+    }
 }
