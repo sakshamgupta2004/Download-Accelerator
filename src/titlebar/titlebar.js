@@ -22,7 +22,7 @@ if (window.nodeprocess.platform == "win32" && document.querySelectorAll('.titleb
 
     document.body.insertBefore(titlebar, document.body.firstChild);
     let logo = document.createElement('img');
-    logo.src = "data:image/x-icon;base64," + fs.readFileSync(path.join(ipcRenderer.sendSync('getDir'), 'src/titlebar/icon.ico'), { encoding: 'base64' });
+    logo.src = "data:image/x-icon;base64," + fs.readFileSync(path.join(ipcRenderer.sendSync('getDir'), 'src/titlebar/icon.png'), { encoding: 'base64' });
     titlebar.appendChild(logo);
     let title = document.createElement('label');
     title.innerText = 'Downloader';

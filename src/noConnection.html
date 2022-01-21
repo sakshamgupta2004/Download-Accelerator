@@ -1,0 +1,44 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="css/nointernet.css" />
+    <link rel="stylesheet" href="css/spinner.css" />
+    <title>
+        Unable to Connect
+    </title>
+
+</head>
+
+<body>
+    <div runat="server" class="loading" id="spinner">Loading&#8230;</div>
+    <div>
+        <h1>
+            Website not reachable. Please try again
+        </h1>
+        <br/>
+        <h3 id="errorcode">
+
+        </h3>
+        <br/>
+        <h5 id="errordesc">
+
+        </h5>
+        <br/>
+        <button id="retry" class="retry">Retry</button>
+    </div>
+
+</body>
+<script>
+    var {
+        ipcRenderer
+    } = window.noderequire('electron');
+    document.getElementById('errorcode').innerText = 'Error Code: ' + ipcRenderer.sendSync('geterrorcode');
+    document.getElementById('errordesc').innerText = 'Description: ' + ipcRenderer.sendSync('geterrordesc');
+    document.getElementById('retry').addEventListener('click', (e) => {
+        window.location.href = ipcRenderer.sendSync('getfailedurl');
+        document.getElementById("spinner").style.visibility =
+            "visible";
+    });
+</script>
+
+</html>

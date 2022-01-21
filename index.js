@@ -10,18 +10,21 @@ var saveLocation = null;
 var savedUrl = null;
 var savedFileName = null;
 var cookiesMain = null;
+var lastUrl = '',
+    ecode = '',
+    edesc = '';
 const iconPath = process.platform !== 'darwin' ?
-    'src/titlebar/icon.ico' :
-    'src/titlebar/icon.icns';
-// fs.mkdirSync(path.join(__dirname, 'src/titlebar/icons'), { recursive: true });
-// const icongen = require('icon-gen');
-// icongen('src/titlebar/icon.ico', 'src/titlebar/icons', { report: true })
-//     .then((results) => {
-//         console.log(results)
-//     })
-//     .catch((err) => {
-//         console.error(err)
-//     })
+    'src/icons/app.ico' :
+    'src/icons/app.icns';
+fs.mkdirSync(path.join(__dirname, 'src/icons'), { recursive: true });
+const icongen = require('icon-gen');
+icongen(path.join(__dirname, 'src/titlebar/icon.png'), path.join(__dirname, 'src/icons'), { report: true })
+    .then((results) => {
+        console.log(results)
+    })
+    .catch((err) => {
+        console.error(err)
+    })
 app.on('ready', () => {
     mainwindow = new BrowserWindow({
         //title: 'Sugarsnooper',
@@ -123,6 +126,12 @@ app.on('ready', () => {
         if (!mainwindow.webContents.getURL().startsWith("file:///"))
             menu.popup(mainwindow.webContents);
     }, false);
+    mainwindow.webContents.on('did-fail-load', (e, errorcode, errordesc, url) => {
+        mainwindow.loadFile('src/noConnection.html');
+        lastUrl = url;
+        ecode = errorcode;
+        edesc = errordesc;
+    });
 
     mainwindow.loadFile('src/home.html');
     //mainwindow.resizable = false;
@@ -469,4 +478,13 @@ ipcMain.on('maximize', (event, args) => {
 });
 ipcMain.on('getDir', (event, args) => {
     event.returnValue = __dirname;
+});
+ipcMain.on('getfailedurl', (e) => {
+    e.returnValue = lastUrl;
+});
+ipcMain.on('geterrorcode', (e) => {
+    e.returnValue = ecode;
+});
+ipcMain.on('geterrordesc', (e) => {
+    e.returnValue = edesc;
 });
