@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
-    "icon": "src/titlebar/icon.ico",
+    "icon": "src/titlebar/icon.png",
     "scripts": {
         "start": "electron ."
     },

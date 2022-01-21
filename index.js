@@ -24,7 +24,7 @@ icongen(path.join(__dirname, 'src/titlebar/icon.png'), path.join(__dirname, 'src
     })
     .catch((err) => {
         console.error(err)
-    })
+    });
 app.on('ready', () => {
     mainwindow = new BrowserWindow({
         //title: 'Sugarsnooper',
