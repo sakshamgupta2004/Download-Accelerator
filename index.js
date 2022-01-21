@@ -30,8 +30,9 @@ app.on('ready', () => {
         minHeight: 300,
         minWidth: 500,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
+            nodeIntegration: false,
+            contextIsolation: false,
+            preload: path.join(__dirname, 'src/preload.js')
         },
         //alwaysOnTop: true
         frame: process.platform != "win32",

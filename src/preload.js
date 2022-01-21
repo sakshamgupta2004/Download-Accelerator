@@ -1,1 +1,2 @@
-document.body.appendChild(document.createElement('a'));
+window.noderequire = require;
+window.nodeprocess = process;

@@ -1,10 +1,10 @@
-if (process.platform == "win32" && document.querySelectorAll('.titlebar').length == 0) {
+if (window.nodeprocess.platform == "win32" && document.querySelectorAll('.titlebar').length == 0) {
     // document.appendChild(document.createElement('a'));
     //   document.addEventListener('load', (e) => {
 
-    let path = require('path');
-    let fs = require('fs');
-    let { ipcRenderer } = require('electron');
+    let path = window.noderequire('path');
+    let fs = window.noderequire('fs');
+    let { ipcRenderer } = window.noderequire('electron');
     let head = document.getElementsByTagName('HEAD')[0];
     let link = document.createElement('style');
     try {
@@ -46,7 +46,7 @@ if (process.platform == "win32" && document.querySelectorAll('.titlebar').length
         console.log('sending');
         const {
             ipcRenderer
-        } = require('electron');
+        } = window.noderequire('electron');
         ipcRenderer.send('minimize', null);
         console.log("sent");
     });
@@ -55,7 +55,7 @@ if (process.platform == "win32" && document.querySelectorAll('.titlebar').length
         console.log('sending');
         const {
             ipcRenderer
-        } = require('electron');
+        } = window.noderequire('electron');
         ipcRenderer.send('maximize', null);
         console.log("sent");
     });
@@ -64,7 +64,7 @@ if (process.platform == "win32" && document.querySelectorAll('.titlebar').length
         console.log('sending');
         const {
             ipcRenderer
-        } = require('electron');
+        } = window.noderequire('electron');
         ipcRenderer.send('quit', null);
         console.log("sent");
     });

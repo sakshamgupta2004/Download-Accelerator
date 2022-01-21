@@ -59,7 +59,7 @@
     }
     const {
         ipcRenderer
-    } = require('electron');
+    } = window.noderequire('electron');
     var urlToDownload = ipcRenderer.sendSync('getSavedUrlAndFileName')[0];
     var filename = ipcRenderer.sendSync('getSavedUrlAndFileName')[1];
     const filesize = function humanFileSize(bytes, si = false, dp = 1) {

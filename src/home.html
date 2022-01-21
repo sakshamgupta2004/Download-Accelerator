@@ -99,7 +99,7 @@
     const {
         ipcRenderer,
         clipboard
-    } = require('electron');
+    } = window.noderequire('electron');
     const updateSaveLocation = () => {
         document.getElementById('saveLocationLabel').innerText = 'Saving to: ' + ipcRenderer.sendSync('getSaveLocation', null);
     };
