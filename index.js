@@ -13,6 +13,15 @@ var cookiesMain = null;
 const iconPath = process.platform !== 'darwin' ?
     'src/titlebar/icon.ico' :
     'src/titlebar/icon.icns';
+// fs.mkdirSync(path.join(__dirname, 'src/titlebar/icons'), { recursive: true });
+// const icongen = require('icon-gen');
+// icongen('src/titlebar/icon.ico', 'src/titlebar/icons', { report: true })
+//     .then((results) => {
+//         console.log(results)
+//     })
+//     .catch((err) => {
+//         console.error(err)
+//     })
 app.on('ready', () => {
     mainwindow = new BrowserWindow({
         //title: 'Sugarsnooper',
@@ -22,39 +31,59 @@ app.on('ready', () => {
         minWidth: 500,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false,
+            contextIsolation: false
         },
         //alwaysOnTop: true
         frame: process.platform != "win32",
         icon: path.join(__dirname, iconPath)
     });
+    mainwindow.webContents.on('did-start-loading', (e, i) => {
 
+        mainwindow.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname, 'src/titlebar/titlebar.js')));
+    });
     mainwindow.on('close', (e) => {
         if (!allowedToExit)
             e.preventDefault();
     });
-    mainwindow.on('resize', (e) => {
-        console.log(mainwindow.getSize()[1]);
+
+
+    mainwindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url == "about:blank") {
+            return {
+                action: 'allow'
+            }
+        } else {
+            mainwindow.webContents.loadURL(url);
+            return {
+                action: 'deny'
+            }
+        }
     });
     mainwindow.webContents.session.on('will-download', (event, item, webContents) => {
         event.preventDefault();
-        savedUrl = item.getURL();
-        savedFileName = item.getFilename();
-        var domain = new URL(item.getURL()).hostname;
-        console.log(domain);
-        mainwindow.loadFile('src/download.html');
-        cookiesMain = "";
-        session.defaultSession.cookies.get({})
-            .then((cookies) => {
-                cookies.forEach((item) => {
-                    if (domain.includes(item['domain']) || (!item['hostOnly']))
-                        cookiesMain += item['name'] + '=' + item['value'] + ";";
+        if (allowedToExit) {
+            savedUrl = item.getURL();
+            savedFileName = item.getFilename();
+            var domain = new URL(item.getURL()).hostname;
+            console.log(domain);
+            mainwindow.loadFile('src/download.html');
+            cookiesMain = "";
+
+            session.defaultSession.cookies.get({})
+                .then((cookies) => {
+                    cookies.forEach((item) => {
+                        if (domain.includes(item['domain']) || (!item['hostOnly']))
+                            cookiesMain += item['name'] + '=' + item['value'] + ";";
+                    });
+                }).catch((error) => {
+                    console.log(error)
                 });
-                cookiesMain = cookiesMain.substring(0, cookiesMain.length - 1);
-                console.log(cookiesMain);
-            }).catch((error) => {
-                console.log(error)
+        } else {
+            dialog.showMessageBox(mainwindow, {
+                label: "Can't download",
+                message: "Another download is running. Please wait"
             });
+        }
 
     });
 
@@ -63,23 +92,28 @@ app.on('ready', () => {
         label: 'Download File',
         click: () => {
 
-            savedUrl = mainwindow.webContents.getURL();
-            savedFileName = decodeURIComponent(savedUrl.split('/').pop().split('#')[0].split('?')[0]);
-            var domain = new URL(savedUrl).hostname;
-            console.log(domain);
-            mainwindow.loadFile('src/download.html');
-            cookiesMain = "";
-            session.defaultSession.cookies.get({})
-                .then((cookies) => {
-                    cookies.forEach((item) => {
-                        if (domain.includes(item['domain']) || (!item['hostOnly']))
-                            cookiesMain += item['name'] + '=' + item['value'] + ";";
+            if (allowedToExit) {
+                savedUrl = mainwindow.webContents.getURL();
+                savedFileName = decodeURIComponent(savedUrl.split('/').pop().split('#')[0].split('?')[0]);
+                var domain = new URL(savedUrl).hostname;
+                console.log(domain);
+                mainwindow.loadFile('src/download.html');
+                cookiesMain = "";
+                session.defaultSession.cookies.get({})
+                    .then((cookies) => {
+                        cookies.forEach((item) => {
+                            if (domain.includes(item['domain']) || (!item['hostOnly']))
+                                cookiesMain += item['name'] + '=' + item['value'] + ";";
+                        });
+                    }).catch((error) => {
+                        console.log(error)
                     });
-                    cookiesMain = cookiesMain.substring(0, cookiesMain.length - 1);
-                    console.log(cookiesMain);
-                }).catch((error) => {
-                    console.log(error)
+            } else {
+                dialog.showMessageBox(mainwindow, {
+                    label: "Can't download",
+                    message: "Another download is running. Please wait"
                 });
+            }
         }
     }));
 
@@ -91,7 +125,7 @@ app.on('ready', () => {
 
     mainwindow.loadFile('src/home.html');
     //mainwindow.resizable = false;
-    Menu.setApplicationMenu(null);
+    //Menu.setApplicationMenu(null);
 });
 
 
@@ -131,6 +165,7 @@ const generateUniqueName = function(filename, tries = 0) {
     return generateUniqueName(name + "(" + (tries + 1) + ")." + nameAndExt[1], tries + 1);
 };
 const getDownloadSizeAndCheckIfSupportsRange = function(url, successfullCallback, failedCallback) {
+
     var req = request({
         method: 'GET',
         uri: url,
@@ -155,6 +190,7 @@ const getDownloadSizeAndCheckIfSupportsRange = function(url, successfullCallback
 };
 const download = function(theUrl, filename, successfullCallback, failedCallback, progressCallback, rangeStart = 0, rangeEnd = 0, cancelFlag = [false]) {
     let file_url = theUrl;
+    console.log(filename);
     let out = fs.createWriteStream(filename + '_tempDownloaderDownload');
     let total = 0;
     let downloaded = 0;
@@ -358,7 +394,8 @@ ipcMain.on('download-start', (event, url, filename, threads) => {
                         singleThreadDownload(event, url, filename);
                         event.reply('rangenotsupport', null);
                     } else {
-                        if (length <= threads) {
+
+                        if (Number.parseInt(length) <= Number.parseInt(threads)) {
                             threads = Math.trunc(length / 2);
                         }
                         if (threads < 1) {
@@ -428,4 +465,7 @@ ipcMain.on('maximize', (event, args) => {
     } else {
         mainwindow.maximize();
     }
+});
+ipcMain.on('getDir', (event, args) => {
+    event.returnValue = __dirname;
 });

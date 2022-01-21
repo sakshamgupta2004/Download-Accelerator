@@ -12,6 +12,7 @@
     "dependencies": {
         "electron": "^16.0.7",
         "electron-packager": "^15.4.0",
+        "icon-gen": "^3.0.0",
         "request": "^2.88.2"
     }
 }

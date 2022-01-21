@@ -1,9 +1,20 @@
-if (process.platform == "win32") {
-    var head = document.getElementsByTagName('HEAD')[0];
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = 'titlebar/titlebar.css';
+if (process.platform == "win32" && document.querySelectorAll('.titlebar').length == 0) {
+    // document.appendChild(document.createElement('a'));
+    //   document.addEventListener('load', (e) => {
+
+    let path = require('path');
+    let fs = require('fs');
+    let { ipcRenderer } = require('electron');
+    let head = document.getElementsByTagName('HEAD')[0];
+    let link = document.createElement('style');
+    try {
+        link.innerHTML = fs.readFileSync(path.join(ipcRenderer.sendSync('getDir'), 'src/titlebar/titlebar.css'));
+    } catch (error) {
+        escapeHTMLPolicy = trustedTypes.createPolicy("forceInner", {
+            createHTML: (to_escape) => to_escape
+        });
+        link.innerHTML = escapeHTMLPolicy.createHTML(fs.readFileSync(path.join(ipcRenderer.sendSync('getDir'), 'src/titlebar/titlebar.css')));
+    }
     head.appendChild(link);
 
     let titlebar = document.createElement('div');
@@ -11,7 +22,7 @@ if (process.platform == "win32") {
 
     document.body.insertBefore(titlebar, document.body.firstChild);
     let logo = document.createElement('img');
-    logo.src = 'titlebar/icon.ico';
+    logo.src = "data:image/x-icon;base64," + fs.readFileSync(path.join(ipcRenderer.sendSync('getDir'), 'src/titlebar/icon.ico'), { encoding: 'base64' });
     titlebar.appendChild(logo);
     let title = document.createElement('label');
     title.innerText = 'Downloader';
@@ -57,5 +68,7 @@ if (process.platform == "win32") {
         ipcRenderer.send('quit', null);
         console.log("sent");
     });
+
+    //   });
 
 }
