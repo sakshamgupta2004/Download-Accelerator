@@ -35,7 +35,7 @@ if (window.nodeprocess.platform == "win32" && document.querySelectorAll('.titleb
     btn.innerText = ipcRenderer.sendSync('ismaximized') ? '🗗' : '🗖';
     titlebar.appendChild(btn);
     btn = document.createElement('button');
-    btn.id = 'close';
+    btn.id = 'quitapp';
     btn.classList.add('appquit');
     btn.innerText = 'X';
     titlebar.appendChild(btn);
@@ -64,7 +64,7 @@ if (window.nodeprocess.platform == "win32" && document.querySelectorAll('.titleb
         }
         console.log("sent");
     });
-    document.querySelector("#close").addEventListener('click', (e) => {
+    document.querySelector("#quitapp").addEventListener('click', (e) => {
 
         console.log('sending');
 

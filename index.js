@@ -51,9 +51,13 @@ app.on('ready', () => {
         frame: process.platform != "win32",
         icon: path.join(__dirname, iconPath)
     });
+    mainwindow.hide();
     mainwindow.webContents.on('did-start-loading', (e, i) => {
 
         mainwindow.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname, 'src/titlebar/titlebar.js')));
+    });
+    mainwindow.webContents.on('did-finish-load', (e, i) => {
+        mainwindow.show();
     });
     mainwindow.on('close', (e) => {
         if (!allowedToExit)

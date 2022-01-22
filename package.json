@@ -1,19 +1,23 @@
 {
-    "name": "Download Accelerator",
+    "name": "Download-Accelerator",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
     "icon": "src/titlebar/icon.png",
     "scripts": {
         "start": "electron .",
-        "package": "electron-packager ./ --all --overwrite --out ./bin/release --icon ./src/icons/icon.ico"
+        "package": "electron-packager ./ --all --overwrite --out ./bin/release --icon ./src/icons/icon.ico",
+        "dist": "electron-builder build -wl"
     },
     "author": "Sugarsnooper",
     "license": "ISC",
     "dependencies": {
-        "electron": "^16.0.7",
         "electron-packager": "^15.4.0",
         "icon-gen": "^3.0.0",
         "request": "^2.88.2"
+    },
+    "devDependencies": {
+        "electron-builder": "^22.14.5",
+        "electron": "^16.0.7"
     }
 }
