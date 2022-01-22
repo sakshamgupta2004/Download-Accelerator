@@ -6,27 +6,40 @@
 }
 
 body {
+    padding-top: 50px;
     background-image: linear-gradient(to right, #434343 0%, black 100%);
 }
 
 .main {
-    overflow: scroll;
+    overflow: auto;
     height: calc(100vh - 50px);
     width: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 0 0;
 }
 
 .inputfields {
+    overflow: visible;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 25px;
 }
 
+.form {
+    overflow: visible;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .form form {
+    overflow: visible;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -34,6 +47,7 @@ body {
 }
 
 .form input {
+    overflow: visible;
     max-width: 100%;
     width: 50vw;
     outline: none;
@@ -54,6 +68,7 @@ body {
 }
 
 .threadSelector {
+    overflow: visible;
     width: auto;
     position: relative;
     display: inline-block;
@@ -143,8 +158,8 @@ body {
 }
 
 .advancedoptions {
+    overflow: hidden;
     transition: all 0.6s ease;
-    overflow: scroll;
     max-height: 0;
     margin-top: 50px;
     display: flex;
@@ -159,6 +174,7 @@ body {
 }
 
 .advancedoptions .radio {
+    height: fit-content;
     color: #e6e6e6;
     display: block;
     position: relative;
@@ -239,8 +255,36 @@ body {
     .savingLocation {
         color: #444444;
     }
+     ::-webkit-scrollbar {
+        width: 5px;
+        height: 0px;
+    }
+     ::-webkit-scrollbar-track {
+        background: none;
+    }
+     ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+     ::-webkit-scrollbar-thumb:hover {
+        background: #eee;
+    }
 }
 
- ::-webkit-scrollbar {
-    width: 0px;
+::-webkit-scrollbar {
+    width: 5px;
+    height: 0px;
+}
+
+::-webkit-scrollbar-track {
+    background: none;
+}
+
+ ::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+}
+
+ ::-webkit-scrollbar-thumb:hover {
+    background: #333;
 }

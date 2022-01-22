@@ -13,6 +13,7 @@ var cookiesMain = null;
 var lastUrl = '',
     ecode = '',
     edesc = '';
+var titlebarEvent = null;
 const iconPath = process.platform !== 'darwin' ?
     'src/icons/app.ico' :
     'src/icons/app.icns';
@@ -57,6 +58,20 @@ app.on('ready', () => {
     mainwindow.on('close', (e) => {
         if (!allowedToExit)
             e.preventDefault();
+    });
+    mainwindow.on('maximize', (event) => {
+        try {
+            titlebarEvent.reply('maximize', null);
+        } catch (e) {
+
+        }
+    });
+    mainwindow.on('unmaximize', (event) => {
+        try {
+            titlebarEvent.reply('unmaximize', null);
+        } catch (e) {
+
+        }
     });
 
 
@@ -148,7 +163,7 @@ app.on('ready', () => {
     // mainwindow.loadFile('src/download.html');
 
     mainwindow.loadFile('src/home.html');
-    Menu.setApplicationMenu(null);
+    // Menu.setApplicationMenu(null);
 });
 
 
@@ -489,9 +504,15 @@ ipcMain.on('minimize', (event, args) => {
 ipcMain.on('maximize', (event, args) => {
     if (mainwindow.isMaximized()) {
         mainwindow.unmaximize();
+        event.returnValue = false;
     } else {
         mainwindow.maximize();
+        event.returnValue = true;
     }
+});
+ipcMain.on('ismaximized', (event) => {
+    titlebarEvent = event;
+    event.returnValue = mainwindow.isMaximized();
 });
 ipcMain.on('getDir', (event, args) => {
     event.returnValue = __dirname;

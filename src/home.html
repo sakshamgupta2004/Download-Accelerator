@@ -31,41 +31,68 @@
                     <button id="advancedoptions" class="download" type="button">&darr;</button>
                 </div>
             </form>
-            <div class='advancedoptions'>
-                <label class="heading">Advanced Options</label>
-                <label class="radio">Save to default location
-                    <input type="radio" checked="true" name="saveto" id="savetodefault"></input>
+
+        </div>
+        <div class='advancedoptions'>
+            <label class="heading">Advanced Options</label>
+            <label class="radio">Save to default location
+                <input type="radio" checked="true" name="saveto" id="savetodefault"></input>
+                <span class="checkmark"></span>
+            </label>
+            <div class="inputfields" style="align-items:center; justify-content: flex-start;">
+                <label class="radio">Select location to save to:
+                    <input type="radio" name="saveto" id="savetoselection"></input>
                     <span class="checkmark"></span>
                 </label>
-                <div class="inputfields" style="align-items:center; justify-content: flex-start;">
-                    <label class="radio">Select location to save to:
-                        <input type="radio" name="saveto" id="savetoselection"></input>
-                        <span class="checkmark"></span>
-                    </label>
-                    <button class="download" id="locationselectbutton">Select Location</button>
-                </div>
-                <label class="savingLocation" id="saveLocationLabel"></label>
+                <button class="download" id="locationselectbutton">Select Location</button>
             </div>
+            <label class="savingLocation" id="saveLocationLabel"></label>
         </div>
     </div>
 </body>
-
 <script>
     let urlIn = document.getElementById("urlIn");
+
     let button = document.getElementById("download_button");
     let selector = document.getElementById("threadselector");
     let advancedoptionsbutton = document.getElementById('advancedoptions');
     let advancedoptions = document.querySelector(".advancedoptions");
+    advancedoptions.style.minHeight = "0";
+
+    Array.prototype.slice.call(advancedoptions.children).forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'scale(0)';
+        element.style.transition = 'all 0.3s ease-in';
+    });
     let dropbuttonthreads = document.querySelector(".dropbtn");
     let dropbuttonsholder = document.querySelector('.buttongrp');
     let dropButtons = [];
     advancedoptionsbutton.addEventListener('click', (e) => {
         if (advancedoptionsbutton.innerText == '↓') {
-            advancedoptions.style.maxHeight = "50vh";
+            advancedoptions.style.minHeight = "calc(100vh - 300px)";
+            advancedoptions.style.overflow = 'visible';
+
+            Array.prototype.slice.call(advancedoptions.children).forEach(element => {
+                element.style.opacity = '1';
+                element.style.transform = 'scale(1)';
+            });
+            advancedoptions.scrollIntoView({
+                behavior: "smooth"
+            })
             advancedoptionsbutton.innerText = '↑';
             updateSaveLocation();
         } else if (advancedoptionsbutton.innerText == '↑') {
-            advancedoptions.style.maxHeight = "0";
+            advancedoptions.style.minHeight = "0";
+
+            setTimeout(() => {
+
+                advancedoptions.style.overflow = 'hidden';
+            }, 300);
+
+            Array.prototype.slice.call(advancedoptions.children).forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'scale(0)';
+            });
             advancedoptionsbutton.innerText = '↓';
         }
 
@@ -121,7 +148,14 @@
     });
 
 
+    urlIn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (clipboard.readText().startsWith('http://') || clipboard.readText().startsWith('https://'))
+            urlIn.value = clipboard.readText();
+        else
+            alert('You clipboard does not contain a url');
 
+    });
     if (clipboard.readText().startsWith('http://') || clipboard.readText().startsWith('https://'))
         urlIn.value = clipboard.readText();
 </script>
