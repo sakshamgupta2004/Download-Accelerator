@@ -227,6 +227,9 @@ body {
     body {
         background-image: linear-gradient(to right, #BCBCBC 0%, white 100%);
     }
+    .form input {
+        color: #191919;
+    }
     .advancedoptions .heading {
         color: #191919;
     }

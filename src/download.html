@@ -1,31 +1,143 @@
 <!DOCTYPE html>
 <html>
-<header>
-    <title>Downloading</title>
-</header>
 
-<head></head>
+<head>
+    <link rel="stylesheet" href="css/downloader.css" />
+    <link rel="stylesheet" href="css/progressBar.css" />
+    <title>Downloading</title>
+</head>
 
 <body>
+    <div class="main">
 
-    <input id="download_button" value="Cancel" type="button"></input>
-    <p id="progress">
+        <div class="topHalf">
+            <input id="download_button" class="download" value="Cancel" type="button"></input>
+            <br/>
 
-    </p>
+            <div id="divprogress" class="progress-bar-container">
+                <div class="progress-bar indeterminate"></div>
+            </div>
+            <br/>
+            <p id="progress"></p>
+        </div>
+        <div class="resizableMain">
+            <div class="dummyTopHalf"></div>
+            <div class="multithreadprogresscontainer">
 
-    <progress value="0" max="100" id="downloadProgress"></progress>
-    <br />
-    <br />
-    <div id="partprogresses">
-
+                <div class="resize-box" id="partprogresses">
+                    <h2>
+                        Threads
+                    </h2>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 
 <script>
-    //var urlToDownload = localStorage.getItem('url');
+    window.isProgressIndeterminate = (progressBar) => {
+        return progressBar.children.item(0).classList.contains('indeterminate');
+    };
+    window.setProgressIndeterminate = (progressBar, isIndeterminate) => {
+
+        if (window.isProgressIndeterminate(progressBar)) {
+            if (!isIndeterminate) {
+                progressBar.children.item(0).classList.remove('indeterminate');
+            }
+        } else {
+            if (isIndeterminate) {
+                progressBar.children.item(0).classList.add('indeterminate');
+            }
+        }
+    };
+    window.setProgressValue = (progressBar, value) => {
+        if (value > 100)
+            value = 100;
+        if (value < 0)
+            value = -1;
+
+        if (value >= 0 && value <= 100) {
+            window.setProgressIndeterminate(progressBar, false);
+            progressBar.children.item(0).style.maxWidth = value + '%';
+        } else {
+            window.setProgressIndeterminate(progressBar, true);
+        }
+
+    }
+    window.setProgressColor = (progressBar, colorHex) => {
+        progressBar.children.item(0).style.backgroundColor = colorHex;
+        progressBar.style.backgroundColor = colorHex + '44';
+    }
+</script>
+<script src="js/interact.min.js">
+</script>
+<script>
+    let topHalf = document.querySelector('.topHalf');
+    let fakeTopHalf = document.querySelector('.dummyTopHalf');
+    let resizebox = document.querySelector('.resize-box');
+    window.onresize = () => {
+        topHalf.style.maxHeight = '40vh';
+        resizebox.style.height = '60vh';
+        resizebox.style.transform = 'translateY(0)';
+        resizebox.setAttribute('data-y', 0);
+    };
+
+    interact('.resize-box')
+        .resizable({
+            // resize from all edges and corners
+            edges: {
+                left: false,
+                right: false,
+                bottom: false,
+                top: true
+            },
+
+            listeners: {
+                move(event) {
+                    var target = event.target
+                        //var x = (parseFloat(target.getAttribute('data-x')) || 0)
+                    var y = (parseFloat(target.getAttribute('data-y')) || 0)
+
+                    // update the element's style
+                    //target.style.width = event.rect.width + 'px'
+                    target.style.height = event.rect.height + 'px'
+
+                    // translate when resizing from top or left edges
+                    //x += event.deltaRect.left
+                    y += event.deltaRect.top;
+
+                    target.style.transform = 'translateY(' + y + 'px)'
+
+                    //target.setAttribute('data-x', x)
+                    target.setAttribute('data-y', y)
+                        //console.log(fakeTopHalf.offsetHeight);
+                    let th = 'calc(' + y + 'px + 40vh)';
+                    console.log(th);
+                    topHalf.style.maxHeight = th;
+                    //target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height)
+                }
+            },
+            modifiers: [
+                // keep the edges inside the parent
+                interact.modifiers.restrictEdges({
+                    outer: 'parent'
+                }),
+
+                // minimum size
+                interact.modifiers.restrictSize({
+                    min: {
+                        width: 100,
+                        height: 50
+                    }
+                })
+            ],
+
+            inertia: true
+        })
+</script>
+<script>
     var numThreads = localStorage.getItem('threads');
     let button = document.getElementById("download_button");
-
 
 
 
@@ -44,18 +156,22 @@
     });
 
     let progressText = document.getElementById("progress");
-    let progressBar = document.getElementById("downloadProgress");
+    let progressBar = document.getElementById("divprogress");
     let partprogressesHolder = document.getElementById("partprogresses");
     let partprogresses = [];
     let partprogressestext = [];
     for (let i = 0; i < numThreads; i++) {
-        partprogresses[i] = document.createElement('progress');
+        partprogresses[i] = document.createElement('div');
+
         partprogressestext[i] = document.createElement('p');
-        partprogresses[i].value = 0;
-        partprogresses[i].max = 100;
+        partprogresses[i].className = 'progress-bar-container';
+        let bar = document.createElement('div');
+        bar.classList.add('progress-bar');
+        bar.classList.add('indeterminate');
+        partprogresses[i].appendChild(bar);
         partprogressesHolder.appendChild(partprogresses[i]);
         partprogressesHolder.appendChild(partprogressestext[i]);
-        //partprogressesHolder.appendChild(document.createElement('br'));
+        partprogressesHolder.appendChild(document.createElement('br'));
     }
     const {
         ipcRenderer
@@ -84,29 +200,38 @@
     let cancelled = false;
     ipcRenderer.on('merging', (e, args) => {
         progressText.innerHTML = "Merging";
+        window.setProgressValue(progressBar, -1);
     });
     ipcRenderer.on('part-progress', (e, completed, total, partnum) => {
         if (total != 0) {
-            partprogresses[partnum].value = Math.trunc((completed * 100) / total);
+            window.setProgressValue(partprogresses[partnum], Math.trunc((completed * 100) / total));
+            window.setProgressColor(partprogresses[partnum], '#6666FF');
             partprogressestext[partnum].innerHTML = filesize(completed) + " of " + filesize(total);
-        } else {}
+        } else {
+
+        }
+    });
+    ipcRenderer.on('part-complete', (e, partnum) => {
+        window.setProgressValue(partprogresses[partnum], 100);
+        window.setProgressColor(partprogresses[partnum], '#66FF66');
     });
     ipcRenderer.on('progress', (e, completed, total) => {
         if (!cancelled) {
             if (total != 0) {
                 progressText.innerHTML = filesize(completed) + " of " + filesize(total);
-                progressBar.value = Math.trunc((completed * 100) / total);
-                progressBar.style.color = '#8888FF';
+                window.setProgressValue(progressBar, Math.trunc((completed * 100) / total));
+                window.setProgressColor(progressBar, '#6666FF');
             } else {}
         }
     });
     ipcRenderer.on('completed', (e, args) => {
         button.value = 'Show in Explorer';
         progressText.innerHTML = "Completed";
-        progressBar.style.color = '#88FF88';
-        progressBar.value = 100;
+        window.setProgressColor(progressBar, '#66FF66');
+        window.setProgressValue(progressBar, 100);
         partprogresses.forEach(element => {
-            element.value = 100;
+            window.setProgressColor(element, '#66FF66');
+            window.setProgressValue(element, 100);
         });
     });
     ipcRenderer.on('failed', (event, e) => {
@@ -117,18 +242,27 @@
             progressText.innerHTML = "Cancelled";
             cancelled = true;
         }
-        progressBar.style.color = '#FF8888';
-        progressBar.value = 100;
+        // progressBar.style.color = '#FF8888';
+        window.setProgressValue(progressBar, 100);
+        window.setProgressColor(progressBar, '#FF6666');
+        partprogresses.forEach(element => {
+            window.setProgressValue(element, 100);
+            window.setProgressColor(element, '#FF6666');
+        });
     });
     ipcRenderer.on('rangenotsupport', (e, args) => {
         for (let l = 1; l < partprogresses.length; l++)
             partprogressesHolder.removeChild(partprogresses[l]);
 
 
-        progressBar.value = -1;
-        partprogresses[0].value = -1;
+        window.setProgressValue(progressBar, -1);
+        window.setProgressValue(partprogresses[0], -1);
     });
-    //ipcRenderer.send('download-start', urlToDownload, urlToDownload.split('/').pop().split('#')[0].split('?')[0], numThreads);
+    ipcRenderer.on('maxthreads', (e, maxthreads) => {
+
+        for (let l = maxthreads; l < partprogresses.length; l++)
+            partprogressesHolder.removeChild(partprogresses[l]);
+    });
     ipcRenderer.send('download-start', urlToDownload, filename, numThreads);
 </script>
 

@@ -20,7 +20,16 @@ fs.mkdirSync(path.join(__dirname, 'src/icons'), { recursive: true });
 const icongen = require('icon-gen');
 icongen(path.join(__dirname, 'src/titlebar/icon.png'), path.join(__dirname, 'src/icons'), { report: true })
     .then((results) => {
-        console.log(results)
+        try {
+            fs.copyFile(path.join(__dirname, 'src/icons/app.ico'), path.join(__dirname, 'src/icons/icon.ico'), (e) => {
+                console.log(e);
+            });
+            fs.copyFile(path.join(__dirname, 'src/icons/app.icns'), path.join(__dirname, 'src/icons/icon.icns'), (e) => {
+                console.log(e);
+            });
+        } catch (e) {
+            console.log(e);
+        }
     })
     .catch((err) => {
         console.error(err)
@@ -35,7 +44,7 @@ app.on('ready', () => {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: false,
-            preload: path.join(__dirname, 'src/preload.js')
+            preload: path.join(__dirname, 'src/js/preload.js')
         },
         //alwaysOnTop: true
         frame: process.platform != "win32",
@@ -133,9 +142,13 @@ app.on('ready', () => {
         edesc = errordesc;
     });
 
+    // savedUrl = 'https://speed.hetzner.de/100MB.bin';
+    // savedFileName = '100mb.bin';
+    // cookiesMain = '';
+    // mainwindow.loadFile('src/download.html');
+
     mainwindow.loadFile('src/home.html');
-    //mainwindow.resizable = false;
-    //Menu.setApplicationMenu(null);
+    Menu.setApplicationMenu(null);
 });
 
 
@@ -336,6 +349,7 @@ const multiThreadDownload = (event, url, filename, length, threads) => {
             filename + "_PART_" + i,
             () => {
                 if (!anyPartFailed) {
+                    event.reply('part-complete', j);
                     partsDone[j] = true;
                     let areAllPartsDone = true;
                     for (let k = 0; k < threads; k++) {
@@ -407,15 +421,18 @@ ipcMain.on('download-start', (event, url, filename, threads) => {
 
                         if (Number.parseInt(length) <= Number.parseInt(threads)) {
                             threads = Math.trunc(length / 2);
-                        }
-                        if (threads < 1) {
-                            threads = 1;
+
+                            if (threads < 1) {
+                                threads = 1;
+                            }
+                            event.reply('maxthreads', threads);
                         }
                         if (threads == 1) {
                             singleThreadDownload(event, url, filename);
                             event.reply('rangenotsupport', null);
                         } else {
                             multiThreadDownload(event, url, filename, length, threads);
+
                         }
                     }
                 }

@@ -1,0 +1,40 @@
+.progress-bar-container {
+    height: 8px;
+    padding: 3px;
+    margin: 2px;
+    border-radius: 4px;
+    width: calc(100% - 4px);
+    background-color: #6666ff44;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.1s ease;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 100%;
+    max-width: 75%;
+    background-color: #6666ff;
+    position: absolute;
+    left: 0;
+    transition: all 0.1s ease;
+}
+
+.indeterminate {
+    width: 25% !important;
+    max-width: 25% !important;
+    animation: loading 1s ease-out 0.5s infinite;
+    left: -75% !important;
+}
+
+@keyframes loading {
+    0% {
+        transform: translateX(0) scaleX(0.1);
+    }
+    50% {
+        transform: translateX(400%) scaleX(2);
+    }
+    to {
+        transform: translateX(800%) scaleX(0.1);
+    }
+}
