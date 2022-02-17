@@ -1,23 +1,53 @@
 {
     "name": "Download-Accelerator",
     "version": "1.0.0",
-    "description": "",
+    "description": "Multithread Downloader",
     "main": "index.js",
     "icon": "src/titlebar/icon.png",
     "scripts": {
-        "start": "electron .",
-        "package": "electron-packager ./ --all --overwrite --out ./bin/release --icon ./src/icons/icon.ico",
-        "dist": "electron-builder build -wl"
+        "start": "electron-forge start",
+        "package": "electron-forge package",
+        "dist": "electron-builder build",
+        "make": "electron-forge make"
     },
     "author": "Sugarsnooper",
     "license": "ISC",
     "dependencies": {
-        "electron-packager": "^15.4.0",
-        "icon-gen": "^3.0.0",
+        "electron-squirrel-startup": "^1.0.0",
         "request": "^2.88.2"
     },
     "devDependencies": {
-        "electron-builder": "^22.14.5",
+        "@electron-forge/cli": "^6.0.0-beta.63",
+        "@electron-forge/maker-deb": "^6.0.0-beta.63",
+        "@electron-forge/maker-rpm": "^6.0.0-beta.63",
+        "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
+        "@electron-forge/maker-zip": "^6.0.0-beta.63",
         "electron": "^16.0.7"
+    },
+    "config": {
+        "forge": {
+            "packagerConfig": {},
+            "makers": [{
+                    "name": "@electron-forge/maker-squirrel",
+                    "config": {
+                        "name": "Download_Accelerator"
+                    }
+                },
+                {
+                    "name": "@electron-forge/maker-zip",
+                    "platforms": [
+                        "darwin"
+                    ]
+                },
+                {
+                    "name": "@electron-forge/maker-deb",
+                    "config": {}
+                },
+                {
+                    "name": "@electron-forge/maker-rpm",
+                    "config": {}
+                }
+            ]
+        }
     }
 }

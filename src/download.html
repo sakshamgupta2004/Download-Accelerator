@@ -12,12 +12,12 @@
 
         <div class="topHalf">
             <input id="download_button" class="download" value="Cancel" type="button"></input>
-            <br/>
+            <br />
 
             <div id="divprogress" class="progress-bar-container">
                 <div class="progress-bar indeterminate"></div>
             </div>
-            <br/>
+            <br />
             <p id="progress"></p>
         </div>
         <div class="resizableMain">
@@ -73,6 +73,13 @@
 <script src="js/interact.min.js">
 </script>
 <script>
+    // window.addEventListener('resize', function(evt) {
+    //     var dimensions = {
+    //         height: (evt.srcElement || evt.currentTarget).innerHeight,
+    //         width: (evt.srcElement || evt.currentTarget).innerWidth
+    //     };
+    //     console.log('Height: ' + dimensions.height + '  Width: ' + dimensions.width);
+    // }, true);
     let topHalf = document.querySelector('.topHalf');
     let fakeTopHalf = document.querySelector('.dummyTopHalf');
     let resizebox = document.querySelector('.resize-box');
@@ -112,7 +119,7 @@
                     //target.setAttribute('data-x', x)
                     target.setAttribute('data-y', y)
                         //console.log(fakeTopHalf.offsetHeight);
-                    let th = 'calc(' + y + 'px + 40vh)';
+                    let th = 'calc(' + y + 'px + 35vh)';
                     console.log(th);
                     topHalf.style.maxHeight = th;
                     //target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height)

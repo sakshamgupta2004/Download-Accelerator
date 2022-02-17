@@ -12,16 +12,18 @@ body {
 }
 
 .main {
+    margin-top: 20px;
     display: flex;
     flex-direction: column;
-    max-height: 100vh;
-    height: 100vh;
+    max-height: calc(100vh - 20px);
+    height: calc(100vh - 20px);
     width: 100%;
 }
 
 .topHalf {
     height: 100%;
-    max-height: 40vh;
+    max-height: 35vh;
+    overflow: auto;
     width: 100%;
     transition: max-height 0.3s ease-in;
     display: flex;
@@ -29,13 +31,13 @@ body {
     gap: 20px;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
 }
 
 .download {
     border-radius: 15px;
     padding: 15px;
     margin: 5px;
+    margin-top: 40px;
     color: #e6e6e6;
     border: none;
     outline: none;

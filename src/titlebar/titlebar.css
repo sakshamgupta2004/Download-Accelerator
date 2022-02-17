@@ -2,6 +2,10 @@
 .titlebar img,
 .titlebar label,
 .titlebar button {
+    text-decoration: initial;
+    font-size: initial;
+    font-family: initial;
+    font: initial;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -44,9 +48,10 @@
     border: none;
     outline: none;
     background-color: transparent;
-    padding: 5px;
+    padding: 10px;
     color: #dddddd;
     transition: all 0.3s ease;
+    border-radius: 0 !important;
 }
 
 .titlebar button:hover {
